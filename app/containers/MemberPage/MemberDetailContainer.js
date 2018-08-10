@@ -6,22 +6,54 @@ import { connect } from 'react-redux'
 import PropTypes from 'prop-types';
 import MemberDetail from "../../components/MemberDetail";
 import { selectError, selectReportLoading, selectReports } from "../ReportPage/selectors";
-import { fetchAllReportsOfUser } from "../ReportPage/actions";
+import { fetchAllReportsOfUser, fetchAllReportsOfUserByDay, fetchAllReportsOfUserByRange } from "../ReportPage/actions";
 import { selectMember, selectMemberLoading } from "./selectors";
 import { getMemberProfile } from "./actions";
 import { selectUser } from "../Auth/selectors";
+import { deleteWeeklyReport, fetchAllWeeklyReportsOfUser } from "../WeeklyReport/actions";
+import { selectWeeklyReports } from "../WeeklyReport/selectors";
+import { addFlashMessage } from "../FlashMessage/actions";
+import { getAllReportsOfTeamByDay, getAllReportsOfTeamByRange } from "../StatisticPage/actions";
 
 class MemberDetailContainer extends Component {
 
+  state = {
+    action: ''
+  }
+
   componentDidMount() {
-    const { match, fetchAllReportsOfUser, getMemberProfile } = this.props;
+    const {
+      match,
+      fetchAllReportsOfUser,
+      getMemberProfile,
+      fetchAllWeeklyReportsOfUser
+    } = this.props;
+
     const memberId = match.params.id;
+
     fetchAllReportsOfUser(memberId);
     getMemberProfile(memberId);
+    fetchAllWeeklyReportsOfUser(memberId)
+  }
+
+  actionChange = (action) => {
+    this.setState({action});
   }
 
   render() {
-    const { reports, loading, memberLoading, member, user} = this.props;
+    const {
+      reports,
+      weekly_reports,
+      loading,
+      memberLoading,
+      member,
+      user,
+      removeWeeklyReport,
+      fetchAllReportsOfUserByRange,
+      fetchAllReportsOfUserByDay,
+      fetchAllReportsOfTeamByDay,
+      fetchAllReportsOfTeamByRange,
+    } = this.props;
 
     return (
       <div className="row">
@@ -33,12 +65,24 @@ class MemberDetailContainer extends Component {
             <Spinner height="650px" style={{fontSize: 32, color: '#FFFFFF'}} />
           ) : (
             <MemberDetail
-              user={user}
               {...this.props}
+              action={this.state.action}
+              actionChange={this.actionChange}
+              user={user}
               member={member}
-              reportsList={reports}
+
               loading={loading}
               memberLoading={memberLoading}
+
+              reportsList={reports}
+              weeklysReportList={weekly_reports}
+
+              removeWeeklyReport={removeWeeklyReport}
+
+              fetchAllReportsOfUserByDay={fetchAllReportsOfUserByDay}
+              fetchAllReportsOfUserByRange={fetchAllReportsOfUserByRange}
+              fetchAllReportsOfTeamByRange={fetchAllReportsOfTeamByRange}
+              fetchAllReportsOfTeamByDay={fetchAllReportsOfTeamByDay}
             />
           )}
         </div>
@@ -54,6 +98,7 @@ MemberDetailContainer.propTypes = {
   error: PropTypes.bool,
   member: PropTypes.object.isRequired,
   fetchAllReportsOfUser: PropTypes.func.isRequired,
+  fetchAllWeeklyReportsOfUser: PropTypes.func.isRequired,
   getMemberProfile: PropTypes.func.isRequired
 };
 
@@ -63,12 +108,23 @@ const mapStateToProps = state => ({
   error: selectError(state),
   user: selectUser(state),
   member: selectMember(state),
-  memberLoading: selectMemberLoading(state)
+  memberLoading: selectMemberLoading(state),
+  weekly_reports: selectWeeklyReports(state),
 });
 
 const mapDispatchToProps = dispatch => ({
   fetchAllReportsOfUser: userId => dispatch(fetchAllReportsOfUser(userId)),
-  getMemberProfile: id => dispatch(getMemberProfile(id))
+  fetchAllWeeklyReportsOfUser: userId => dispatch(fetchAllWeeklyReportsOfUser(userId)),
+
+  getMemberProfile: id => dispatch(getMemberProfile(id)),
+  addFlashMessage: message => dispatch(addFlashMessage(message)),
+  removeWeeklyReport: id => dispatch(deleteWeeklyReport(id)),
+
+  fetchAllReportsOfTeamByRange: (teamName, range) => dispatch(getAllReportsOfTeamByRange(teamName, range)),
+  fetchAllReportsOfTeamByDay: (teamName, date) => dispatch(getAllReportsOfTeamByDay(teamName, date)),
+
+  fetchAllReportsOfUserByDay: (userId, date) => dispatch(fetchAllReportsOfUserByDay(userId, date)),
+  fetchAllReportsOfUserByRange: (userId, range) => dispatch(fetchAllReportsOfUserByRange(userId, range)),
 });
 
 export default connect(
